@@ -119,7 +119,7 @@ BatchQVecTime = Shaped[QVecTime, "*batch"]
 # -----------------
 # Any Shape
 
-# A float array with any shape.
+FloatAnyShape = Float[Array, "..."]
 FloatQAnyShape = Float[Quantity, "..."]
 
 

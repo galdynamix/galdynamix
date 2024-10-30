@@ -45,7 +45,7 @@
     "unxt>=0.20.2",
     "xmmutablemap>=0.1",
     "zeroth>=0.1",
-]
+  ]
 
   [project.optional-dependencies]
     # All runtime dependencies
@@ -75,6 +75,7 @@
       "nox>=2024.10.9",
       "pre-commit>=4.0.1",
       "pytest-arraydiff>=0.6.1",
+      "pytest-codspeed",
       "pytest-cov>=5",
       "pytest>=8.3",
       "sybil>=8.0.0",

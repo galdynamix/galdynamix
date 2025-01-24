@@ -5,7 +5,7 @@ __all__ = ["ModuleMeta"]
 import dataclasses
 import functools
 import inspect
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from enum import Enum, auto
 from typing import Any, Generic, TypeVar, cast, overload
 
@@ -131,7 +131,7 @@ class ModuleMeta(_ModuleMeta):  # type: ignore[misc]
         mcs,
         name: str,
         bases: tuple[type, ...],
-        namespace: Mapping[str, Any],
+        namespace: dict[str, Any],
         /,
         *,
         strict: bool = False,

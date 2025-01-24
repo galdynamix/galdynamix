@@ -54,7 +54,7 @@ def parse_to_quantity(
 
 @dispatch
 def parse_to_quantity(
-    x: int | float | Array | np.ndarray, /, *, unit: gt.Unit, **_: Any
+    x: int | float | Array | np.ndarray[Any, Any], /, *, unit: gt.Unit, **_: Any
 ) -> AbstractQuantity:
     arr = jnp.asarray(x, dtype=None)
     dtype = jnp.promote_types(arr.dtype, canonicalize_dtype(float))

@@ -361,8 +361,8 @@ class TriaxialNFWPotential(AbstractSinglePotential):
 
     def __post_init__(self) -> None:
         # Gauss-Legendre quadrature
-        x, w = np.polynomial.legendre.leggauss(self.integration_order)
-        x, w = jnp.asarray(x, dtype=float), jnp.asarray(w, dtype=float)
+        x_, w_ = np.polynomial.legendre.leggauss(self.integration_order)
+        x, w = jnp.asarray(x_, dtype=float), jnp.asarray(w_, dtype=float)
         # Interval change from [-1, 1] to [0, 1]
         x = 0.5 * (x + 1)
         w = 0.5 * w

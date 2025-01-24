@@ -4,6 +4,7 @@ __all__: list[str] = []
 
 from typing import Literal, TypeAlias, overload
 
+import quax
 from jaxtyping import Array, Shaped
 
 import coordinax as cx
@@ -13,7 +14,7 @@ import galax.typing as gt
 from galax.utils._jax import quaxify
 
 AnyScalar: TypeAlias = Shaped[Array, ""]
-ArrayAnyShape: TypeAlias = Shaped[Array, "..."]
+ArrayAnyShape: TypeAlias = Shaped[Array | quax.ArrayValue, "..."]
 
 
 def vector_batched_shape(obj: cx.vecs.AbstractVector) -> tuple[gt.Shape, int]:

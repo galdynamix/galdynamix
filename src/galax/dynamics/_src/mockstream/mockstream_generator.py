@@ -13,6 +13,7 @@ from jaxtyping import PRNGKeyArray
 
 import quaxed.numpy as jnp
 import unxt as u
+from unxt.quantity import UncheckedQuantity as FastQ
 
 import galax.coordinates as gc
 import galax.typing as gt
@@ -247,15 +248,15 @@ class MockStreamGenerator(eqx.Module):  # type: ignore[misc]
 
         comps = {}
         comps["lead"] = MockStreamArm(
-            q=u.Quantity(lead_arm_w[:, 0:3], self.units["length"]),
-            p=u.Quantity(lead_arm_w[:, 3:6], self.units["speed"]),
+            q=FastQ(lead_arm_w[:, 0:3], self.units["length"]),
+            p=FastQ(lead_arm_w[:, 3:6], self.units["speed"]),
             t=t,
             release_time=mock0["lead"].release_time,
             frame=frame,
         )
         comps["trail"] = MockStreamArm(
-            q=u.Quantity(trail_arm_w[:, 0:3], self.units["length"]),
-            p=u.Quantity(trail_arm_w[:, 3:6], self.units["speed"]),
+            q=FastQ(trail_arm_w[:, 0:3], self.units["length"]),
+            p=FastQ(trail_arm_w[:, 3:6], self.units["speed"]),
             t=t,
             release_time=mock0["trail"].release_time,
             frame=frame,

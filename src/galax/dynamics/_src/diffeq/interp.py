@@ -8,7 +8,7 @@ __all__ = ["VectorizedDenseInterpolation"]
 
 from collections.abc import Callable
 from functools import partial
-from typing import TypeAlias, cast, final
+from typing import Any, TypeAlias, cast, final
 from typing_extensions import override
 
 import diffrax as dfx
@@ -28,7 +28,7 @@ VecDenseInfos: TypeAlias = dict[
 Shape: TypeAlias = tuple[int, ...]
 
 
-class AbstractVectorizedDenseInterpolation(dfx.AbstractPath):  # type: ignore[misc]
+class AbstractVectorizedDenseInterpolation(dfx.AbstractPath[Any]):  # type: ignore[misc]
     """ABC for vectorized wrapper around a `diffrax.DenseInterpolation`."""
 
     #: Dense interpolation with flattened batch dimensions.

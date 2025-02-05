@@ -183,14 +183,14 @@ class AbstractPotential_Test(GalaIOMixin, metaclass=ABCMeta):
         # Simple batch
         orbits = pot.evaluate_orbit(xv[None, :], ts)
         assert isinstance(orbits, gd.Orbit)
-        assert orbits.shape == (1, len(ts))
+        assert orbits.shape == (len(ts), 1)
         assert jnp.allclose(orbits.t, ts, atol=u.Quantity(1e-16, "Myr"))
 
         # More complicated batch
         xv2 = jnp.stack([xv, xv], axis=0)
         orbits = pot.evaluate_orbit(xv2, ts)
         assert isinstance(orbits, gd.Orbit)
-        assert orbits.shape == (2, len(ts))
+        assert orbits.shape == (len(ts), 2)
         assert jnp.allclose(orbits.t, ts, atol=u.Quantity(1e-16, "Myr"))
 
 

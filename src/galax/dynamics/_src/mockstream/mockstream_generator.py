@@ -20,12 +20,13 @@ import galax.typing as gt
 from .core import MockStream, MockStreamArm
 from .df import AbstractStreamDF, ProgenitorMassCallable
 from .utils import cond_reverse
-from galax.dynamics._src.integrate.funcs import _default_integrator, evaluate_orbit
-from galax.dynamics._src.integrate.integrator import Integrator
-from galax.dynamics._src.orbit import Orbit
+from galax.dynamics._src.dynamics import DynamicsSolver
+from galax.dynamics._src.orbit import Orbit, evaluate_orbit
 from galax.potential import AbstractPotential
 
 Carry: TypeAlias = tuple[gt.IntSz0, gt.SzN, gt.SzN]
+
+_default_solver: DynamicsSolver = DynamicsSolver()
 
 
 @final
@@ -42,13 +43,11 @@ class MockStreamGenerator(eqx.Module):  # type: ignore[misc]
     """Potential in which the progenitor orbits and creates a stream."""
 
     _: KW_ONLY
-    progenitor_integrator: Integrator = eqx.field(
-        default=_default_integrator, static=True
-    )
-    """Integrator for the progenitor orbit."""
+    progenitor_solver: DynamicsSolver = eqx.field(default=_default_solver, static=True)
+    """Solver for the progenitor orbit."""
 
-    stream_integrator: Integrator = eqx.field(default=_default_integrator, static=True)
-    """Integrator for the stream."""
+    stream_solver: DynamicsSolver = eqx.field(default=_default_solver, static=True)
+    """Solver for the stream."""
 
     @property
     def units(self) -> u.AbstractUnitSystem:
@@ -63,9 +62,7 @@ class MockStreamGenerator(eqx.Module):  # type: ignore[misc]
         """Integrate the progenitor orbit."""
         return cast(
             Orbit,
-            evaluate_orbit(
-                self.potential, w0, ts, integrator=self.progenitor_integrator
-            ),
+            evaluate_orbit(self.potential, w0, ts, solver=self.progenitor_solver),
         )
 
     # ==========================================================================
@@ -103,7 +100,7 @@ class MockStreamGenerator(eqx.Module):  # type: ignore[misc]
             def integ_ics(ics: gt.Sz6) -> gt.SzN:
                 # TODO: only return the final state
                 return evaluate_orbit(
-                    self.potential, ics, tstep, integrator=self.stream_integrator
+                    self.potential, ics, tstep, solver=self.stream_solver
                 ).w(units=self.units)[-1]
 
             # vmap integration over leading and trailing arm
@@ -138,10 +135,10 @@ class MockStreamGenerator(eqx.Module):  # type: ignore[misc]
         ) -> tuple[gt.Sz6, gt.Sz6]:
             tstep = jnp.asarray([ts[i], t_f])
             w_lead = evaluate_orbit(
-                self.potential, w0_l_i, tstep, integrator=self.stream_integrator
+                self.potential, w0_l_i, tstep, solver=self.stream_solver
             ).w(units=self.potential.units)[-1]
             w_trail = evaluate_orbit(
-                self.potential, w0_t_i, tstep, integrator=self.stream_integrator
+                self.potential, w0_t_i, tstep, solver=self.stream_solver
             ).w(units=self.potential.units)[-1]
             return w_lead, w_trail
 

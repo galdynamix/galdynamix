@@ -537,16 +537,16 @@ wheels = [
 
 [[package]]
 name = "diffraxtra"
-version = "1.0.2"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "diffrax" },
     { name = "plum-dispatch" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/19/20/e8931816281e6c10adac6341d5e373bb3db778b82c038da8227787f12cee/diffraxtra-1.0.2.tar.gz", hash = "sha256:0478fca1268109dcaf8c988f89945ed31fe2bdbe5accb3bbbef9e3f3e1f78f08", size = 71478 }
+sdist = { url = "https://files.pythonhosted.org/packages/42/ac/7a25f6647e2e61b03b6797a6af8691a00bc9414e0cb688a06c3b1d225645/diffraxtra-1.1.0.tar.gz", hash = "sha256:bab3f3979b1bf6e93a3718773cc5bae5065dc36318b8aab97dc8cd34f3d75cea", size = 72098 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5f/aa/93cec938d3a5a6315b88cf6791ea1655585c755dcb0742040362b3b55622/diffraxtra-1.0.2-py3-none-any.whl", hash = "sha256:f4966c25b960dc361ce5141fac489d2cb52fa618eb1e3e3cd85d68f472e3f7a4", size = 13455 },
+    { url = "https://files.pythonhosted.org/packages/94/c0/752a275dabc51af39b774eaf5a0ab397557729a3c6d2364c213b5e838952/diffraxtra-1.1.0-py3-none-any.whl", hash = "sha256:dad61c17a118a944891d46bf04a2015a69a60b7164647062e3184d8aca91d6d3", size = 14024 },
 ]
 
 [[package]]
@@ -781,7 +781,7 @@ requires-dist = [
     { name = "coordinax", specifier = ">=0.19.0" },
     { name = "dataclassish", specifier = ">=0.7.1" },
     { name = "diffrax", specifier = ">=0.6" },
-    { name = "diffraxtra", specifier = ">=1.0.2" },
+    { name = "diffraxtra", specifier = ">=1.1.0" },
     { name = "equinox", specifier = ">=0.11.8" },
     { name = "gala", marker = "extra == 'all'", specifier = ">=1.9" },
     { name = "gala", marker = "extra == 'interop-all'", specifier = ">=1.9" },

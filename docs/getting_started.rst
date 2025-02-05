@@ -141,7 +141,7 @@ phase-space positions at times::
           ...
         ),
         p=CartesianVel3D(...),
-        t=Quantity['time'](Array([...], dtype=float64), unit='Myr'),
+        t=UncheckedQuantity(Array([...], dtype=float64), unit='Myr'),
         frame=SimulationFrame(),
         potential=MilkyWayPotential(...),
         interpolant=None

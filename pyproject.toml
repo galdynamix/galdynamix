@@ -32,7 +32,7 @@
     "coordinax>=0.19.0",
     "dataclassish>=0.7.1",
     "diffrax>=0.6",
-    "diffraxtra>=1.0.2",
+    "diffraxtra>=1.1.0",
     "equinox>=0.11.8",
     "is-annotated>=1.0",
     "jax>=0.4.35",

@@ -43,7 +43,7 @@ def terms(
     >>> import galax.potential as gp
     >>> import galax.dynamics as gd
 
-    >>> solver = gd.integrate.DiffEqSolver(dfx.Dopri8())
+    >>> solver = gd.solve.DiffEqSolver(dfx.Dopri8())
 
     >>> pot = gp.KeplerPotential(m_tot=u.Quantity(1e12, "Msun"), units="galactic")
     >>> field = gd.fields.HamiltonianField(pot)

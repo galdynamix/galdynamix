@@ -62,9 +62,9 @@ def from_(cls: type[AbstractSolver], solver: AbstractSolver) -> AbstractSolver:
 
     Examples
     --------
-    >>> from galax.dynamics.integrate import DynamicsSolver
-    >>> solver = DynamicsSolver()
-    >>> new_solver = DynamicsSolver.from_(solver)
+    >>> import galax.dynamics as gd
+    >>> solver = gd.DynamicsSolver()
+    >>> new_solver = gd.DynamicsSolver.from_(solver)
     >>> new_solver is solver
     True
 
@@ -91,7 +91,7 @@ def from_(cls: type[AbstractSolver], obj: Any) -> AbstractSolver:
     Examples
     --------
     >>> import diffrax as dfx
-    >>> from galax.dynamics.integrate import DynamicsSolver, DiffEqSolver
+    >>> from galax.dynamics.solve import DynamicsSolver, DiffEqSolver
 
     >>> DynamicsSolver.from_( DiffEqSolver(dfx.Dopri5()))
     DynamicsSolver(
@@ -118,16 +118,16 @@ def from_(cls: type[AbstractSolver], obj: Mapping[str, Any]) -> AbstractSolver:
     Examples
     --------
     >>> import diffrax as dfx
-    >>> from galax.dynamics.integrate import DynamicsSolver
+    >>> import galax.dynamics as gd
 
-    >>> DynamicsSolver.from_({})
+    >>> gd.DynamicsSolver.from_({})
     DynamicsSolver(
       diffeqsolver=DiffEqSolver(
         solver=Dopri8(scan_kind=None),
         stepsize_controller=PIDController( ... ),
         adjoint=RecursiveCheckpointAdjoint(checkpoints=None) ) )
 
-    >>> DynamicsSolver.from_({"diffeqsolver": dfx.Dopri5()})
+    >>> gd.DynamicsSolver.from_({"diffeqsolver": dfx.Dopri5()})
     DynamicsSolver(
       diffeqsolver=DiffEqSolver(
         solver=Dopri5(scan_kind=None),

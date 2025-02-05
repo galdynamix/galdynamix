@@ -38,7 +38,7 @@ def from_(
     >>> pot = gp.HernquistPotential(m_tot=u.Quantity(1e12, "Msun"),
     ...    r_s=u.Quantity(5, "kpc"), units="galactic")
     >>> field = gd.fields.HamiltonianField(pot)
-    >>> solver = gd.integrate.DynamicsSolver()  # defaults to Dopri8
+    >>> solver = gd.DynamicsSolver()  # defaults to Dopri8
     >>> w0 = gc.PhaseSpacePosition(
     ...     q=u.Quantity([[8, 0, 9], [9, 0, 3]], "kpc"),
     ...     p=u.Quantity([0, 220, 0], "km/s"),

@@ -50,7 +50,7 @@ class DynamicsSolver(AbstractSolver, strict=True):  # type: ignore[call-arg]
     >>> import galax.potential as gp
     >>> import galax.dynamics as gd
 
-    >>> solver = gd.integrate.DynamicsSolver()  # defaults to Dopri8
+    >>> solver = gd.DynamicsSolver()  # defaults to Dopri8
 
     Define the vector field. In this example it's to solve Hamilton's EoM in a
     gravitational potential.
@@ -92,9 +92,9 @@ class DynamicsSolver(AbstractSolver, strict=True):  # type: ignore[call-arg]
        setting the `diffrax.AbstractSolver`,
        `diffrax.AbstractStepSizeController`, etc.
 
-    >>> diffeqsolver = gd.integrate.DiffEqSolver(dfx.Dopri8(),
+    >>> diffeqsolver = gd.solve.DiffEqSolver(dfx.Dopri8(),
     ...     stepsize_controller=dfx.PIDController(rtol=1e-5, atol=1e-5))
-    >>> solver = gd.integrate.DynamicsSolver(diffeqsolver)
+    >>> solver = gd.DynamicsSolver(diffeqsolver)
     >>> solver
     DynamicsSolver(
       diffeqsolver=DiffEqSolver(
@@ -107,7 +107,7 @@ class DynamicsSolver(AbstractSolver, strict=True):  # type: ignore[call-arg]
     2. A `dict` of keyword arguments that are passed to
        `galax.dynamics.integrate.DiffEqSolver`.
 
-    >>> solver = gd.integrate.DynamicsSolver({
+    >>> solver = gd.DynamicsSolver({
     ...     "solver": dfx.Dopri8(), "stepsize_controller": dfx.ConstantStepSize()})
     >>> solver
     DynamicsSolver(
@@ -187,7 +187,7 @@ class DynamicsSolver(AbstractSolver, strict=True):  # type: ignore[call-arg]
         >>> import galax.potential as gp
         >>> import galax.dynamics as gd
 
-        >>> solver = gd.integrate.DynamicsSolver()
+        >>> solver = gd.DynamicsSolver()
 
         Specify the vector field.
 
@@ -658,7 +658,7 @@ def terms(
     >>> import galax.potential as gp
     >>> import galax.dynamics as gd
 
-    >>> solver = gd.integrate.DynamicsSolver(dfx.Dopri8())
+    >>> solver = gd.DynamicsSolver(dfx.Dopri8())
 
     >>> pot = gp.KeplerPotential(m_tot=u.Quantity(1e12, "Msun"), units="galactic")
     >>> field = gd.fields.HamiltonianField(pot)

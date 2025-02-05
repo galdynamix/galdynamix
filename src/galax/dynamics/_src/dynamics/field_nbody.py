@@ -40,7 +40,7 @@ class NBodyField(AbstractDynamicsField, strict=True):  # type: ignore[call-arg]
     >>> q = u.Quantity([[-1, 0, 0], [1, 0, 0]], "AU") / 2
     >>> p = u.Quantity([[0, -1, 0], [0, 1, 0]], "km/s") * 25
 
-    >>> solver = gd.integrate.DynamicsSolver()
+    >>> solver = gd.DynamicsSolver()
 
     >>> field = gd.fields.NBodyField(
     ...     masses=u.Quantity([1, 1], "Msun"),

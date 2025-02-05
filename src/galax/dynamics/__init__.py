@@ -3,13 +3,16 @@
 __all__ = [
     # Modules
     "fields",
-    "integrate",
+    "solve",
+    "integrate",  # TODO: deprecate
     "mockstream",
     "plot",
     "cluster",
-    # integrate
+    # solve
     "evaluate_orbit",
     "Orbit",
+    "AbstractSolver",
+    "DynamicsSolver",
     # mockstream
     "MockStreamArm",
     "MockStream",
@@ -35,7 +38,6 @@ with install_import_hook("galax.dynamics", RUNTIME_TYPECHECKER):
     from ._src.api import omega, specific_angular_momentum
     from ._src.cluster.funcs import lagrange_points, tidal_radius
     from ._src.orbit import Orbit
-    from .integrate import evaluate_orbit
     from .mockstream import (
         AbstractStreamDF,
         ChenStreamDF,
@@ -44,6 +46,7 @@ with install_import_hook("galax.dynamics", RUNTIME_TYPECHECKER):
         MockStreamArm,
         MockStreamGenerator,
     )
+    from .solve import AbstractSolver, DynamicsSolver, evaluate_orbit
 
     #
     # isort: split

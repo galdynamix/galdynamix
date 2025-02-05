@@ -462,6 +462,25 @@ def solve(
     return soln
 
 
+@DynamicsSolver.solve.dispatch
+@eqx.filter_jit
+def solve(
+    self: DynamicsSolver,
+    field: AbstractDynamicsField,
+    qp: gt.BBtSz6,
+    t0: gt.BBtRealQuSz0,
+    t1: gt.BBtRealQuSz0,
+    /,
+    args: Any = (),
+    saveat: Any = default_saveat,
+    **solver_kw: Any,
+) -> dfx.Solution:
+    """Solve for q,p array."""
+    units = field.units
+    y0 = (FastQ(qp[..., :3], units["length"]), FastQ(qp[..., 3:], units["speed"]))
+    return self.solve(field, y0, t0, t1, args=args, saveat=saveat, **solver_kw)
+
+
 # --------------------------------
 # Coordinax
 

@@ -2,11 +2,8 @@
 
 __all__ = ["evaluate_orbit"]
 
-from collections.abc import Callable
 from typing import Any, Literal
 
-import jax
-from jaxtyping import Array
 from plum import dispatch
 
 import quaxed.numpy as jnp
@@ -16,17 +13,12 @@ import galax.coordinates as gc
 import galax.dynamics._src.custom_types as gdt
 import galax.potential as gp
 import galax.typing as gt
-from .integrator import Integrator
-from galax.dynamics._src.dynamics import HamiltonianField
-from galax.dynamics._src.orbit import Orbit
+from .interp import PhaseSpaceInterpolation
+from .orbit import Orbit
+from galax.dynamics._src.dynamics import DynamicsSolver, HamiltonianField
 
 # TODO: enable setting the default integrator
-_default_integrator: Integrator = Integrator()
-
-
-_select_w0: Callable[[Array, Array, Array], Array] = jax.numpy.vectorize(
-    jax.lax.select, signature="(),(6),(6)->(6)"
-)
+_default_solver: DynamicsSolver = DynamicsSolver()
 
 
 @dispatch
@@ -36,7 +28,7 @@ def evaluate_orbit(
     t: Any,
     /,
     *,
-    integrator: Integrator | None = None,
+    solver: DynamicsSolver | None = None,
     dense: Literal[True, False] = False,
 ) -> Orbit:
     """Compute an orbit in a potential.
@@ -119,14 +111,22 @@ def evaluate_orbit(
     ...                            t=u.Quantity(-100, "Myr"))
     >>> ts = u.Quantity(jnp.linspace(0, 1, 4), "Gyr")
     >>> orbit = gd.evaluate_orbit(potential, w0, ts)
-    >>> orbit
+    >>> print(orbit)
     Orbit(
-      q=CartesianPos3D(...), p=CartesianVel3D(...),
-      t=Quantity['time'](Array(..., dtype=float64), unit='Myr'),
-      frame=SimulationFrame(),
-      potential=KeplerPotential(...),
-      interpolant=None
-    )
+        q=<CartesianPos3D (x[kpc], y[kpc], z[kpc])
+            [[ 8.953 -1.324  0.   ]
+             [ 9.035  1.276  0.   ]
+             [ 2.644 -2.021  0.   ]
+             [ 9.827 -0.562  0.   ]]>,
+        p=<CartesianVel3D (x[kpc / Myr], y[kpc / Myr], z[kpc / Myr])
+            [[ 0.322  0.181  0.   ]
+             [-0.308  0.183  0.   ]
+             [ 1.336 -0.247  0.   ]
+             [ 0.126  0.201  0.   ]]>,
+        t=UncheckedQuantity(Array([ ... ], dtype=float64), unit='Myr'),
+        frame=SimulationFrame(),
+        potential=KeplerPotential( ... ),
+        interpolant=None)
 
     Note how there are 4 points in the orbit, corresponding to the 4 requested
     return times. These are the times at which the orbit is evaluated, not the
@@ -136,26 +136,34 @@ def evaluate_orbit(
 
     >>> ts = u.Quantity(jnp.linspace(0, 1, 10), "Gyr")
     >>> orbit = gd.evaluate_orbit(potential, w0, ts)
-    >>> orbit
+    >>> print(orbit)
     Orbit(
-      q=CartesianPos3D(...), p=CartesianVel3D(...),
-      t=Quantity['time'](Array(..., dtype=float64), unit='Myr'),
-      frame=SimulationFrame(),
-      potential=KeplerPotential(...),
-      interpolant=None
-    )
+        q=<CartesianPos3D (x[kpc], y[kpc], z[kpc])
+            [[ 8.953 -1.324  0.   ]
+             ...
+             [ 9.827 -0.562  0.   ]]>,
+        p=<CartesianVel3D (x[kpc / Myr], y[kpc / Myr], z[kpc / Myr])
+            [[ 0.322  0.181  0.   ]
+             ...
+             [ 0.126  0.201  0.   ]]>,
+        t=UncheckedQuantity(Array([ ... ], dtype=float64), unit='Myr'),
+        frame=SimulationFrame(),
+        potential=KeplerPotential( ... ),
+        interpolant=None)
 
     Or evaluating at a single time:
 
     >>> orbit = gd.evaluate_orbit(potential, w0, u.Quantity(0.5, "Gyr"))
-    >>> orbit
+    >>> print(orbit)
     Orbit(
-        q=CartesianPos3D(...), p=CartesianVel3D(...),
-        t=Quantity['time'](Array([500.], dtype=float64, ...), unit='Myr'),
+        q=<CartesianPos3D (x[kpc], y[kpc], z[kpc])
+            [[inf inf inf]]>,
+        p=<CartesianVel3D (x[kpc / Myr], y[kpc / Myr], z[kpc / Myr])
+            [[inf inf inf]]>,
+        t=UncheckedQuantity(Array([500.], dtype=float64, weak_type=True), unit='Myr'),
         frame=SimulationFrame(),
-        potential=KeplerPotential(...),
-        interpolant=None
-    )
+        potential=KeplerPotential( ... ),
+        interpolant=None)
 
     We can also integrate a batch of orbits at once:
 
@@ -165,15 +173,11 @@ def evaluate_orbit(
     >>> orbit = gd.evaluate_orbit(potential, w0, ts)
     >>> orbit
     Orbit(
-      q=CartesianPos3D(
-        x=Quantity[PhysicalType('length')](value=f64[2,10], unit=Unit("kpc")),
-        ...
-      ),
-      p=CartesianVel3D(...),
-      t=Quantity['time'](Array(..., dtype=float64), unit='Myr'),
-      frame=SimulationFrame(),
-      potential=KeplerPotential(...),
-      interpolant=None
+        q=CartesianPos3D( ... ), p=CartesianVel3D( ... ),
+        t=UncheckedQuantity(Array([ ... ], dtype=float64), unit='Myr'),
+        frame=SimulationFrame(),
+        potential=KeplerPotential( ... ),
+        interpolant=None
     )
 
     :class:`~galax.dynamics.PhaseSpacePosition` has a ``t`` argument for the
@@ -199,7 +203,7 @@ def evaluate_orbit(
     """
     # Setup
     units = pot.units
-    integrator = _default_integrator if integrator is None else integrator
+    solver = _default_solver if solver is None else solver
     t = jnp.atleast_1d(FastQ.from_(t, units["time"]))  # ensure t units
 
     field = HamiltonianField(pot)
@@ -208,23 +212,29 @@ def evaluate_orbit(
     tw0 = w0.t if (isinstance(w0, gc.PhaseSpacePosition) and w0.t is not None) else t[0]
 
     # Initial integration `w0.t` to `t[0]`.
-    # TODO: get diffrax's `solver_state` to speed the second integration.
-    # TODO: get diffrax's `controller_state` to speed the second integration.
+    # TODO: diffrax's `solver_state`, `controller_state`
     # TODO: `max_steps` as kwarg.
-    qp0 = integrator(
-        field,
-        w0,
-        tw0,
-        jnp.full_like(tw0, fill_value=t[0]),
-        dense=False,
-    )
+    fullt0 = jnp.full_like(tw0, fill_value=t[0])
+    soln0 = solver.solve(field, w0, tw0, fullt0, dense=False, unbatch_time=True)
 
     # Orbit integration `t[0]` to `t[-1]`
     # TODO: `max_steps` as kwarg.
-    ws = integrator(field, qp0, t[0], t[-1], saveat=t, dense=dense)
+    ys = (FastQ(soln0.ys[0], units["length"]), FastQ(soln0.ys[1], units["speed"]))
+    soln = solver.solve(
+        field, ys, t[0], t[-1], saveat=t, dense=dense, vectorize_interpolation=True
+    )
 
     # Return the orbit object
-    return Orbit._from_psp(ws, t, pot)  # noqa: SLF001
+    return Orbit(
+        q=FastQ(soln.ys[0], units["length"]),
+        p=FastQ(soln.ys[1], units["speed"]),
+        t=t,
+        frame=getattr(w0, "frame", gc.frames.SimulationFrame()),
+        potential=pot,
+        interpolant=(
+            PhaseSpaceInterpolation(soln.interpolation, units=units) if dense else None
+        ),
+    )
 
 
 @dispatch
@@ -262,11 +272,11 @@ def evaluate_orbit(
     >>> orbit = gd.evaluate_orbit(potential, w0, t=ts)
     >>> orbit
     Orbit(
-      q=CartesianPos3D(...), p=CartesianVel3D(...),
-      t=Quantity['time'](Array(..., dtype=float64), unit='Myr'),
-      frame=SimulationFrame(),
-      potential=KeplerPotential(...),
-      interpolant=None
+        q=CartesianPos3D( ... ), p=CartesianVel3D( ... ),
+        t=UncheckedQuantity(Array([ ... ], dtype=float64), unit='Myr'),
+        frame=SimulationFrame(),
+        potential=KeplerPotential( ... ),
+        interpolant=None
     )
 
     """

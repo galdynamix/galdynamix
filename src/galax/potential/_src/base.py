@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from dataclasses import KW_ONLY, fields, replace
 from functools import partial
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import equinox as eqx
 import jax
@@ -30,8 +30,7 @@ from galax.utils._jax import vectorize_method
 from galax.utils.dataclasses import ModuleMeta
 
 if TYPE_CHECKING:
-    from galax.dynamics import Orbit
-    from galax.dynamics.integrate import Integrator
+    import galax.dynamics  # noqa: ICN001
 
 default_constants = ImmutableMap({"G": u.Quantity.from_(_CONST_G)})
 
@@ -319,9 +318,9 @@ class AbstractPotential(eqx.Module, metaclass=ModuleMeta, strict=True):  # type:
         w0: Any,
         t: Any,
         *,
-        integrator: "Integrator | None" = None,
+        solver: "galax.dynamics.integrate.DynamicsSolver | None" = None,
         dense: Literal[True, False] = False,
-    ) -> "Orbit":
+    ) -> "galax.dynamics.Orbit":
         """Compute an orbit in a potential.
 
         :class:`~galax.coordinates.PhaseSpacePosition` includes a time in
@@ -358,12 +357,13 @@ class AbstractPotential(eqx.Module, metaclass=ModuleMeta, strict=True):  # type:
             .. note::
 
                 This is NOT the timesteps to use for integration, which are
-                controlled by the `integrator`; the default integrator
-                :class:`~galax.integrator.Integrator` uses adaptive timesteps.
+                controlled by the `solver`; the default solver
+                :class:`~galax.dynamics.integrate.DynamicsSolver` uses adaptive
+                timesteps.
 
-        integrator : :class:`~galax.integrate.Integrator`, keyword-only
-            Integrator to use.  If `None`, the default integrator
-            :class:`~galax.integrator.Integrator` is used.
+        solver : :class:`~galax.integrate.Integrator`, keyword-only
+            Integrator to use.  If `None`, the default solver
+            :class:`~galax.dynamics.integrate.DynamicsSolver` is used.
 
         dense: bool, optional keyword-only
             If `True`, return a dense (interpolated) orbit.  If `False`, return
@@ -380,12 +380,12 @@ class AbstractPotential(eqx.Module, metaclass=ModuleMeta, strict=True):  # type:
         galax.dynamics.evaluate_orbit
             The function for which this method is a wrapper. It has more details
             and examples.
-        """
-        from galax.dynamics import evaluate_orbit
 
-        return cast(
-            "Orbit", evaluate_orbit(self, w0, t, integrator=integrator, dense=dense)
-        )
+        """
+        import galax.dynamics as gd
+
+        orbit: gd.Orbit = gd.evaluate_orbit(self, w0, t, solver=solver, dense=dense)
+        return orbit
 
     # =========================================================================
     # Interoperability

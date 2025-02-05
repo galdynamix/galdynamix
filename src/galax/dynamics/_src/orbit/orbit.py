@@ -14,6 +14,8 @@ from numpy import ndarray
 import coordinax as cx
 import quaxed.numpy as jnp
 import unxt as u
+from dataclassish.converters import Unless
+from unxt.quantity import AbstractQuantity
 
 import galax.coordinates as gc
 import galax.potential as gp
@@ -32,8 +34,7 @@ class Orbit(gc.AbstractOnePhaseSpacePosition):
 
     Examples
     --------
-    We can create an orbit by integrating a point mass in a Kepler
-    potential:
+    We can create an orbit by integrating a point mass in a Kepler potential:
 
     >>> import jax.numpy as jnp
     >>> import unxt as u
@@ -49,36 +50,50 @@ class Orbit(gc.AbstractOnePhaseSpacePosition):
     >>> ts = u.Quantity(jnp.linspace(0., 1., 10), "Gyr")
 
     >>> orbit = gd.evaluate_orbit(potential, w0, ts)
-    >>> orbit
+    >>> print(orbit)
     Orbit(
-      q=CartesianPos3D( ... ),
-      p=CartesianVel3D( ... ),
-      t=Quantity['time'](Array(..., dtype=float64), unit='Myr'),
-      frame=SimulationFrame(),
-      potential=KeplerPotential( ... ),
-      interpolant=None
-    )
+        q=<CartesianPos3D (x[kpc], y[kpc], z[kpc])
+            [[ 8.     0.     0.   ]
+             ...
+             [ 7.665  0.711  0.   ]]>,
+        p=<CartesianVel3D (x[kpc / Myr], y[kpc / Myr], z[kpc / Myr])
+            [[ 0.     0.235  0.   ]
+             ...
+             [-0.221  0.225  0.   ]]>,
+        t=UncheckedQuantity(Array([ ... ], dtype=float64), unit='Myr'),
+        frame=SimulationFrame(),
+        potential=KeplerPotential(
+          ...
+        ),
+        interpolant=None)
 
     >>> orbit = gd.evaluate_orbit(potential, w0, ts, dense=True)
-    >>> orbit
+    >>> print(orbit)
     Orbit(
-      q=CartesianPos3D( ... ),
-      p=CartesianVel3D( ... ),
-      t=Quantity['time'](Array(..., dtype=float64), unit='Myr'),
-      frame=SimulationFrame(),
-      potential=KeplerPotential( ... ),
-      interpolant=Interpolant( ... )
-    )
+        q=<CartesianPos3D (x[kpc], y[kpc], z[kpc])
+            [[ 8.     0.     0.   ]
+             ...
+             [ 7.665  0.711  0.   ]]>,
+        p=<CartesianVel3D (x[kpc / Myr], y[kpc / Myr], z[kpc / Myr])
+            [[ 0.     0.235  0.   ]
+             ...
+             [-0.221  0.225  0.   ]]>,
+        t=UncheckedQuantity(Array([ ... ], dtype=float64), unit='Myr'),
+        frame=SimulationFrame(),
+        potential=KeplerPotential( ... ),
+        interpolant=PhaseSpaceInterpolation( ... ))
 
-    >>> orbit(u.Quantity(0.5, "Gyr"))
+    >>> psp = orbit(u.Quantity(0.5, "Gyr"))
+    >>> print(psp)
     Orbit(
-      q=CartesianPos3D( ... ),
-      p=CartesianVel3D( ... ),
-      t=Quantity['time'](Array([0.5], dtype=float64, ...), unit='Gyr'),
-      frame=SimulationFrame(),
-      potential=KeplerPotential( ... ),
-      interpolant=None
-    )
+        q=<CartesianPos3D (x[kpc], y[kpc], z[kpc])
+            [ 2.368 -1.712  0.   ]>,
+        p=<CartesianVel3D (x[kpc / Myr], y[kpc / Myr], z[kpc / Myr])
+            [ 1.401 -0.218  0.   ]>,
+        t=Quantity['time'](Array([500.], dtype=float64, weak_type=True), unit='Myr'),
+        frame=SimulationFrame(),
+        potential=KeplerPotential( ... ),
+        interpolant=None)
 
     """
 
@@ -89,7 +104,9 @@ class Orbit(gc.AbstractOnePhaseSpacePosition):
     r"""Conjugate momenta ($v_x$, $v_y$, $v_z$)."""
 
     # TODO: consider how this should be vectorized
-    t: QuSzTime | QuSz1 = eqx.field(converter=u.Quantity["time"].from_)
+    t: QuSzTime | QuSz1 = eqx.field(
+        converter=Unless(AbstractQuantity, u.Quantity["time"].from_)
+    )
     """Array of times corresponding to the positions."""
 
     _: KW_ONLY
@@ -100,7 +117,7 @@ class Orbit(gc.AbstractOnePhaseSpacePosition):
     potential: gp.AbstractPotential
     """Potential in which the orbit was integrated."""
 
-    interpolant: gc.PhaseSpacePositionInterpolant | None = None
+    interpolant: gc.PhaseSpacePositionInterpolant | None = eqx.field()
     """The interpolation function."""
 
     def __post_init__(self) -> None:
@@ -109,28 +126,16 @@ class Orbit(gc.AbstractOnePhaseSpacePosition):
         if self.t.ndim == 0:
             object.__setattr__(self, "t", jnp.atleast_1d(self.t))
 
+    def __check_init__(self) -> None:
+        """Check initialization."""
+        if u.dimension_of(self.t) != u.dimension("time"):
+            msg = "Time must have a dimension of time."
+            raise ValueError(msg)
+
     # -------------------------------------------------------------------------
 
     plot: ClassVar = PlotOrbitDescriptor()
     """Plot the orbit."""
-
-    # TODO: figure out public API. This is used by `evaluate_orbit`
-    @classmethod
-    def _from_psp(
-        cls,
-        w: gc.AbstractOnePhaseSpacePosition,
-        t: QuSzTime,
-        potential: gp.AbstractPotential,
-    ) -> "Orbit":
-        """Create an orbit from a phase-space position."""
-        return Orbit(
-            q=w.q,
-            p=w.p,
-            t=t,
-            frame=w.frame,
-            potential=potential,
-            interpolant=getattr(w, "interpolant", None),
-        )
 
     # ==========================================================================
     # Interpolation
@@ -192,16 +197,12 @@ class Orbit(gc.AbstractOnePhaseSpacePosition):
 
         >>> orbit[(slice(None),)]
         Orbit(
-          q=CartesianPos3D(
-            x=Quantity[...](value=f64[10], unit=Unit("kpc")),
-            ... ),
-          p=CartesianVel3D(
-            x=Quantity[...]( value=f64[10], unit=Unit("kpc / Myr") ),
-            ... ),
-          t=Quantity['time'](Array(..., dtype=float64), unit='Myr'),
-          frame=SimulationFrame(),
-          potential=KeplerPotential( ... ),
-          interpolant=None
+            q=CartesianPos3D( ... ),
+            p=CartesianVel3D( ... ),
+            t=UncheckedQuantity(Array([ ... ], dtype=float64), unit='Myr'),
+            frame=SimulationFrame(),
+            potential=KeplerPotential( ... ),
+            interpolant=None
         )
 
         """
@@ -237,18 +238,12 @@ class Orbit(gc.AbstractOnePhaseSpacePosition):
 
         >>> orbit[0:2]
         Orbit(
-          q=CartesianPos3D(
-            x=Quantity[...](value=f64[2], unit=Unit("kpc")),
-            ...
-          ),
-          p=CartesianVel3D(
-            x=Quantity[...]( value=f64[2], unit=Unit("kpc / Myr") ),
-            ...
-          ),
-          t=Quantity['time'](Array([  0., 100.], dtype=float64), unit='Myr'),
-          frame=SimulationFrame(),
-          potential=KeplerPotential( ... ),
-          interpolant=None
+            q=CartesianPos3D( ... ),
+            p=CartesianVel3D( ... ),
+            t=UncheckedQuantity(Array([  0., 100.], dtype=float64), unit='Myr'),
+            frame=SimulationFrame(),
+            potential=KeplerPotential( ... ),
+            interpolant=None
         )
 
         """

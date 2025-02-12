@@ -80,7 +80,7 @@ class AbstractPhaseSpaceCoordinate(AbstractPhaseSpaceObject):
     """Time corresponding to the positions and momenta."""
 
     frame: eqx.AbstractVar[SimulationFrame]  # TODO: support frames
-    """The reference frame of the phase-space position."""
+    """The reference frame of the phase-space coordinate."""
 
     # ==========================================================================
     # Coordinate API
@@ -144,7 +144,7 @@ class AbstractPhaseSpaceCoordinate(AbstractPhaseSpaceObject):
 
         Returns
         -------
-        wt : Array[float, (*batch, 1+Q+P)]
+        Array[float, (*batch, (T=1)+Q+P)]
             The full phase-space position, including time on the first axis.
 
         Examples
@@ -152,21 +152,22 @@ class AbstractPhaseSpaceCoordinate(AbstractPhaseSpaceObject):
         >>> import unxt as u
         >>> import galax.coordinates as gc
 
-        We can create a phase-space position and convert it to a 6-vector:
+        We can create a phase-space position and convert it to a 7-vector:
 
         >>> psp = gc.PhaseSpaceCoordinate(q=u.Quantity([1, 2, 3], "kpc"),
-        ...                             p=u.Quantity([4, 5, 6], "km/s"),
-        ...                             t=u.Quantity(7.0, "Myr"))
+        ...                               p=u.Quantity([4, 5, 6], "km/s"),
+        ...                               t=u.Quantity(7.0, "Myr"))
         >>> psp.wt(units="galactic")
             Array([7.00000000e+00, 1.00000000e+00, 2.00000000e+00, 3.00000000e+00,
                 4.09084866e-03, 5.11356083e-03, 6.13627299e-03], dtype=float64, ...)
+
         """
         usys = u.unitsystem(units)
         batch, comps = self._shape_tuple
         cart = self.vconvert(cx.CartesianPos3D).uconvert(usys)
         q = jnp.broadcast_to(convert(cart.q, FastQ), (*batch, comps.q))
         p = jnp.broadcast_to(convert(cart.p, FastQ), (*batch, comps.p))
-        t = jnp.broadcast_to(self.t.value[..., None], (*batch, comps.t))
+        t = jnp.broadcast_to(self.t.ustrip(usys["time"])[..., None], (*batch, comps.t))
         return jnp.concat((t, q.value, p.value), axis=-1)
 
     # ==========================================================================
